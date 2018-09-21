@@ -1,25 +1,37 @@
 #include <OneWire.h>
 #include <SPI.h>
-#include <EEPROM.h>
+//#include <EEPROM.h>
 
 #define LightSensor A0
 #define ChipSelect 9
 
-byte Brightness;
+// 28 FF F3 8B 31 18 1 5C  - On Board
+// 28 FF 4C 0 33 18 2 9C
+// 28 FF BA 3D 33 18 2 73
+// 28 FF 77 5A 33 18 1 49
+const byte Hello[11] PROGMEM = {0x0F, 0x0F, 0x0F, 0x0C, 0x0B, 0x0D, 0x0D, 0x00, 0x0F, 0x0F, 0x0F};
+
+const byte ALLaddr[32] PROGMEM = {0x28, 0xFF, 0xF3, 0x8B, 0x31, 0x18, 0x01, 0x5C,
+                                  0x28, 0xFF, 0x4C, 0x00, 0x33, 0x18, 0x02, 0x9C,
+                                  0x28, 0xFF, 0xBA, 0x3D, 0x33, 0x18, 0x02, 0x73,
+                                  0x28, 0xFF, 0x77, 0x5A, 0x33, 0x18, 0x01, 0x49
+                                 };
+
+byte Brightness, OldBrightness;
 byte disp[4] = {0x0F, 0x0F, 0x0F, 0x0F};
-byte key[4] = {8, 7, 3, 2};
-byte led[4] = {A3, A4, A5, A2};
+byte OLDdisp[4] = {0x00, 0x80, 0x0F, 0x0F};
+const byte key[4] = {8, 7, 3, 2};
+const byte led[4] = {A3, A4, A5, A2};
 byte i;
 byte X9 = 0xFF;
 byte index = 0;
-byte addr[4][8];
+byte addr[8];
 byte data[4][12];
 int Temp;
-byte Hello[11] = {0x0F, 0x0F, 0x0F, 0x0C, 0x0B, 0x0D, 0x0D, 0x00, 0x0F, 0x0F, 0x0F};
 unsigned long TimeGetTemp = 0;
 unsigned long TimeSkanKey = 0;
-unsigned long TimeDisplay = 4000;
 byte StepGetTemp = 0;
+bool NewDisp = false;
 
 OneWire  ds(10);
 
@@ -39,21 +51,15 @@ void setup() {
     delay(100);
     digitalWrite(led[i], LOW);
   }
-
-  ds.search(addr[index]);
-  ds.reset_search();
-
 }
 // ----- Конец инициализации
 
 
 // ----- Главный цикл
 void loop() {
-
   GetTemp();
   SkanKey();
   Display();
-
 }
 // ----- Конец главного цикла
 
@@ -62,8 +68,11 @@ void GetTemp() {
     switch (StepGetTemp) {
       case 0:
         for (i = 0; i < 4; i++) {
+          for (byte j = 0; j < 8; j++) {
+            addr[j] = pgm_read_byte_near(ALLaddr + i * 8 + j);
+          }
           ds.reset();
-          ds.select(addr[i]);
+          ds.select(addr);
           ds.write(0x44, 1);
         }
         StepGetTemp = 10;
@@ -71,13 +80,14 @@ void GetTemp() {
         break;
       case 10:
         for (byte j = 0; j < 4; j++) {
+          for (i = 0; i < 8 ; i++) addr[i] = pgm_read_byte_near(ALLaddr + j * 8 + i);
           ds.reset();
-          ds.select(addr[j]);
+          ds.select(addr);
           ds.write(0xBE);
           for ( i = 0; i < 9; i++) data[j][i] = ds.read();
         }
         StepGetTemp = 0;
-        TimeGetTemp = millis() + 10000;
+        TimeGetTemp = millis() + 30000;
         break;
     }
   }
@@ -85,9 +95,16 @@ void GetTemp() {
 
 void SkanKey() {
   if (TimeSkanKey < millis()) {
+
+    Brightness = map(constrain(analogRead(LightSensor), 200, 600), 200, 600, 0, 15);
+    if (Brightness == OldBrightness) {
+      NewDisp = true;
+      OldBrightness = Brightness;
+    }
+
     for (i = 0; i < 4; i++) {
       if (digitalRead(key[i])) {
-        if (i != index) TimeDisplay = 0;
+        if (i != index) NewDisp = true;
         index = i;
       }
     }
@@ -101,10 +118,10 @@ void SkanKey() {
         Temp = Temp / 10;
       }
       disp[1] += 128; // Десятичная точка
+      Temp = abs(raw) / 1.6;
+      if (Temp < 1000) disp[3] = 0x0F;
+      if (Temp < 100) disp[2] = 0x0F;
       if (raw < 0) disp[3] = 0x0A;
-      raw = abs(raw) / 1.6;
-      if (raw < 1000) disp[3] = 0x0F;
-      if (raw < 100) disp[2] = 0x0F;
       X9 = 0xFF;
     }
     else {
@@ -114,13 +131,20 @@ void SkanKey() {
       disp[2] = 0x05;
       disp[3] = 0x0B;
     }
+
+    for (i = 0; i < 4; i++) {
+      if (OLDdisp[i] != disp[i] ) {
+        NewDisp = true;
+        OLDdisp[i] = disp[i];
+      }
+    }
+
     TimeSkanKey = millis() + 100;
   }
 }
 
 void Display() {
-  if (TimeDisplay < millis()) {
-    Brightness = map(constrain(analogRead(LightSensor), 200, 600), 200, 600, 0, 15);
+  if (NewDisp) {
 
     SPI.beginTransaction(SPISettings(16000000, MSBFIRST, SPI_MODE0));
     SPI.begin();
@@ -137,7 +161,8 @@ void Display() {
     for ( i = 0 ; i < 4 ; i++ )
       if ( index == i ) digitalWrite(led[i], HIGH);
       else     digitalWrite(led[i], LOW);
-    TimeDisplay = millis() + 5000;
+
+    NewDisp = false;
   }
 }
 
@@ -160,7 +185,7 @@ void Show() {
   for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x0F);
 
   for (byte j = 0; j < 8 ; j++ ) {
-    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, Hello[3 - i + j]);
+    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 3 - i + j) );
     delay(250);
   }
 
