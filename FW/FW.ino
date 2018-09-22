@@ -97,7 +97,7 @@ void SkanKey() {
   if (TimeSkanKey < millis()) {
 
     Brightness = map(constrain(analogRead(LightSensor), 200, 600), 200, 600, 0, 15);
-    if (Brightness == OldBrightness) {
+    if (Brightness != OldBrightness) {
       NewDisp = true;
       OldBrightness = Brightness;
     }
@@ -193,4 +193,3 @@ void Show() {
 
   SPI.end();
 }
-
