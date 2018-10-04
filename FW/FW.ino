@@ -5,6 +5,9 @@
 #define LightSensor A0
 #define ChipSelect 9
 
+#define LightLow 100
+#define LightHigh 500
+
 // 28 FF F3 8B 31 18 1 5C  - On Board
 // 28 FF 4C 0 33 18 2 9C
 // 28 FF BA 3D 33 18 2 73
@@ -17,7 +20,7 @@ const byte ALLaddr[32] PROGMEM = {0x28, 0xFF, 0xF3, 0x8B, 0x31, 0x18, 0x01, 0x5C
                                   0x28, 0xFF, 0x77, 0x5A, 0x33, 0x18, 0x01, 0x49
                                  };
 
-byte Brightness, OldBrightness;
+byte Brightness, Brightness1, OldBrightness;
 byte disp[4] = {0x0F, 0x0F, 0x0F, 0x0F};
 byte OLDdisp[4] = {0x00, 0x80, 0x0F, 0x0F};
 const byte key[4] = {8, 7, 3, 2};
@@ -27,7 +30,7 @@ byte X9 = 0xFF;
 byte index = 0;
 byte addr[8];
 byte data[4][12];
-int Temp;
+int Temp, Light;
 unsigned long TimeGetTemp = 0;
 unsigned long TimeSkanKey = 0;
 byte StepGetTemp = 0;
@@ -96,8 +99,10 @@ void GetTemp() {
 void SkanKey() {
   if (TimeSkanKey < millis()) {
 
-    Brightness = map(constrain(analogRead(LightSensor), 200, 600), 200, 600, 0, 15);
-    if (Brightness != OldBrightness) {
+    Light = analogRead(LightSensor);
+    Brightness = map(constrain((Light), LightLow, LightHigh), LightLow, LightHigh, 3, 15);
+    Brightness1 = map(constrain((Light + 3), LightLow, LightHigh), LightLow, LightHigh, 3, 15);
+    if ( ( Brightness == Brightness1 ) && (Brightness != OldBrightness) ) {
       NewDisp = true;
       OldBrightness = Brightness;
     }
