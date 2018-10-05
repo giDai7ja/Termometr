@@ -5,8 +5,8 @@
 #define LightSensor A0
 #define ChipSelect 9
 
-#define LightLow 100
-#define LightHigh 500
+#define LightLow 80
+#define LightHigh 450
 
 // 28 FF F3 8B 31 18 1 5C  - On Board
 // 28 FF 4C 0 33 18 2 9C
@@ -210,14 +210,14 @@ void Show() {
     for ( i = 0 ; i < 4 - j ; i++ ) {
       Send7219(i + 1, pgm_read_byte_near(Hello + 11 + j) );
       for ( k = 0 ; k < i; k++ ) Send7219(k + 1, 0x00 );
-      delay(250);
+      delay(150);
     }
     delay(250);
   } // Написали
   delay(1000);
   for (j = 0; j < 4 ; j++ ) {
     for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 14 - i + j) );
-    delay(250);
+    delay(150);
   } // Уехали
   Send7219(0x0C, 0x00);
   // CAHE
