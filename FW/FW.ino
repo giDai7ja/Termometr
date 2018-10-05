@@ -215,13 +215,13 @@ void Show() {
     delay(250);
   } // Написали
   delay(1000);
-  for (j = 0; j < 8 ; j++ ) {
-    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 11 - i + j) );
+  for (j = 0; j < 4 ; j++ ) {
+    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 14 - i + j) );
     delay(250);
   } // Уехали
   Send7219(0x0C, 0x00);
   // CAHE
-  delay(1000);
+  delay(500);
 
   // 60
   Send7219(0x09, 0x0F);
