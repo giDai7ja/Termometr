@@ -12,7 +12,9 @@
 // 28 FF 4C 0 33 18 2 9C
 // 28 FF BA 3D 33 18 2 73
 // 28 FF 77 5A 33 18 1 49
-const byte Hello[11] PROGMEM = {0x0F, 0x0F, 0x0F, 0x0C, 0x0B, 0x0D, 0x0D, 0x00, 0x0F, 0x0F, 0x0F};
+const byte Hello[18] PROGMEM = {0x0F, 0x0F, 0x0F, 0x0C, 0x0B, 0x0D, 0x0D, 0x00, 0x0F, 0x0F, 0x0F,
+                                0x4E, 0x77, 0x37, 0x4F, 0x00, 0x00, 0x00
+                               };
 
 const byte ALLaddr[32] PROGMEM = {0x28, 0xFF, 0xF3, 0x8B, 0x31, 0x18, 0x01, 0x5C,
                                   0x28, 0xFF, 0x4C, 0x00, 0x33, 0x18, 0x02, 0x9C,
@@ -25,7 +27,7 @@ byte disp[4] = {0x0F, 0x0F, 0x0F, 0x0F};
 byte OLDdisp[4] = {0x00, 0x80, 0x0F, 0x0F};
 const byte key[4] = {8, 7, 3, 2};
 const byte led[4] = {A3, A4, A5, A2};
-byte i;
+byte i, j, k;
 byte X9 = 0xFF;
 byte index = 0;
 byte addr[8];
@@ -71,7 +73,7 @@ void GetTemp() {
     switch (StepGetTemp) {
       case 0:
         for (i = 0; i < 4; i++) {
-          for (byte j = 0; j < 8; j++) {
+          for (j = 0; j < 8; j++) {
             addr[j] = pgm_read_byte_near(ALLaddr + i * 8 + j);
           }
           ds.reset();
@@ -82,7 +84,7 @@ void GetTemp() {
         TimeGetTemp = millis() + 1000;
         break;
       case 10:
-        for (byte j = 0; j < 4; j++) {
+        for (j = 0; j < 4; j++) {
           for (i = 0; i < 8 ; i++) addr[i] = pgm_read_byte_near(ALLaddr + j * 8 + i);
           ds.reset();
           ds.select(addr);
@@ -101,7 +103,7 @@ void SkanKey() {
 
     Light = analogRead(LightSensor);
     Brightness = map(constrain((Light), LightLow, LightHigh), LightLow, LightHigh, 3, 15);
-    Brightness1 = map(constrain((Light + 3), LightLow, LightHigh), LightLow, LightHigh, 3, 15);
+    Brightness1 = map(constrain((Light + 5), LightLow, LightHigh), LightLow, LightHigh, 3, 15);
     if ( ( Brightness == Brightness1 ) && (Brightness != OldBrightness) ) {
       NewDisp = true;
       OldBrightness = Brightness;
@@ -183,18 +185,63 @@ void Show() {
   SPI.begin();
 
   Send7219(0xFF, 0x00);
-  Send7219(0x09, 0xFF);
-  Send7219(0x0A, 0xFF);
+  Send7219(0x09, 0x00);
+  Send7219(0x0A, 0x0F);
   Send7219(0x0B, 0x03);
-  Send7219(0x0C, 0xFF);
-  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x0F);
+  Send7219(0x0C, 0x00);
+  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x00);
 
-  for (byte j = 0; j < 8 ; j++ ) {
-    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 3 - i + j) );
+  delay(500);
+
+  /*  // HELLO
+    for (j = 0; j < 8 ; j++ ) {
+      for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 3 - i + j) );
+      delay(250);
+    }
+    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x0F);
+    delay(1000);
+    // HELLO
+  */
+  
+  // CAHE
+  /*Send7219(0x0C, 0x00);
+  Send7219(0x09, 0x00);
+  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x00);
+  */
+  Send7219(0x0C, 0x0F);
+
+  for (j = 0; j < 4 ; j++ ) {
+    for ( i = 0 ; i < 3 - j ; i++ ) {
+      Send7219(i + 1, pgm_read_byte_near(Hello + 11 + j) );
+      for ( k = 0 ; k < i; k++ ) Send7219(k + 1, 0x00 );
+      delay(250);
+    }
     delay(250);
-  }
+  } // Написали
+  delay(1000);
+  for (j = 0; j < 8 ; j++ ) {
+    for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 11 - i + j) );
+    delay(250);
+  } // Уехали
+  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x00);
+  // CAHE
 
-  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x0F);
+  delay(1000);
+
+  // 60
+  Send7219(0x0C, 0x00);
+  Send7219(0x09, 0x0F);
+  Send7219(4, 0x0F);
+  Send7219(3, 0x06);
+  Send7219(2, 0x00);
+  Send7219(1, 0x0F);
+  for ( i = 0 ; i < 3 ; i++ ) {
+    Send7219(0x0C, 0x0F);
+    delay(1000);
+    Send7219(0x0C, 0x00);
+    delay(1000);
+  }
+  //60
 
   SPI.end();
 }
