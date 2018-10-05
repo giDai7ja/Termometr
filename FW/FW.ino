@@ -204,14 +204,10 @@ void Show() {
   */
   
   // CAHE
-  /*Send7219(0x0C, 0x00);
-  Send7219(0x09, 0x00);
-  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x00);
-  */
   Send7219(0x0C, 0x0F);
 
   for (j = 0; j < 4 ; j++ ) {
-    for ( i = 0 ; i < 3 - j ; i++ ) {
+    for ( i = 0 ; i < 4 - j ; i++ ) {
       Send7219(i + 1, pgm_read_byte_near(Hello + 11 + j) );
       for ( k = 0 ; k < i; k++ ) Send7219(k + 1, 0x00 );
       delay(250);
@@ -223,13 +219,11 @@ void Show() {
     for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 11 - i + j) );
     delay(250);
   } // Уехали
-  for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, 0x00);
+  Send7219(0x0C, 0x00);
   // CAHE
-
   delay(1000);
 
   // 60
-  Send7219(0x0C, 0x00);
   Send7219(0x09, 0x0F);
   Send7219(4, 0x0F);
   Send7219(3, 0x06);
@@ -237,9 +231,9 @@ void Show() {
   Send7219(1, 0x0F);
   for ( i = 0 ; i < 3 ; i++ ) {
     Send7219(0x0C, 0x0F);
-    delay(1000);
+    delay(500);
     Send7219(0x0C, 0x00);
-    delay(1000);
+    delay(500);
   }
   //60
 
