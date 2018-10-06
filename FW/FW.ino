@@ -210,14 +210,14 @@ void Show() {
     for ( i = 0 ; i < 4 - j ; i++ ) {
       Send7219(i + 1, pgm_read_byte_near(Hello + 11 + j) );
       for ( k = 0 ; k < i; k++ ) Send7219(k + 1, 0x00 );
-      delay(150);
+      delay(120);
     }
     delay(250);
   } // Написали
   delay(1000);
   for (j = 0; j < 4 ; j++ ) {
     for ( i = 0 ; i < 4 ; i++ ) Send7219(i + 1, pgm_read_byte_near(Hello + 14 - i + j) );
-    delay(150);
+    delay(120);
   } // Уехали
   Send7219(0x0C, 0x00);
   // CAHE
