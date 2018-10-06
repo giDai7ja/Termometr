@@ -119,13 +119,13 @@ void SkanKey() {
     if ( (OneWire::crc8(data[index], 8)) == data[index][8] ) {
       int16_t raw = (data[index][1] << 8) | data[index][0];
 
-      Temp = abs(raw) / 1.6;
+      Temp = ( abs(raw) / 1.6 ) + 0.5;
       for ( i = 0 ; i < 4 ; i++ ) {
         disp[i] = Temp % 10;
         Temp = Temp / 10;
       }
       disp[1] += 128; // Десятичная точка
-      Temp = abs(raw) / 1.6;
+      Temp = ( abs(raw) / 1.6 ) + 0.5;
       if (Temp < 1000) disp[3] = 0x0F;
       if (Temp < 100) disp[2] = 0x0F;
       if (raw < 0) disp[3] = 0x0A;
@@ -202,7 +202,7 @@ void Show() {
     delay(1000);
     // HELLO
   */
-  
+
   // CAHE
   Send7219(0x0C, 0x0F);
 
